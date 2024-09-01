@@ -1,0 +1,31 @@
+{
+  "name": "besocialapi",
+  "version": "1.0.0",
+  "description": "A social network for writers.",
+  "main": "server.js",
+  "scripts": {
+    "test": "\"echo \\\"Error: no test specified\\\" && exit 1\",",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/LeenaCruz/BeSocialAPI.git"
+  },
+  "keywords": [
+    "API",
+    "MongoDB",
+    "Mongoose",
+    "Social",
+    "Network"
+  ],
+  "author": "Leena Cruz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeenaCruz/BeSocialAPI/issues"
+  },
+  "homepage": "https://github.com/LeenaCruz/BeSocialAPI#readme",
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.6.0"
+  }
+}
