@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
+// Get all users
 app.get('/users', async (req, res) => {
   try {
     // Using model in route to find all documents that are instances of that model
@@ -41,6 +41,39 @@ app.post('/users', (req, res) => {
     res.status(500).json({ error: 'Something went wrong' });
   }
 });
+// Update a user
+app.put('/users/:userId', async (req, res) => {
+  try {
+  const user = await User.findOneAndUpdate(
+    { _id: req.body.userId },
+    { username: req.body.username, email: req.body.email},
+  );
+  if (!user) {
+    return res
+      .status(404)
+      .json({ message: 'Thought created, but no users with this ID' });
+  }
+  
+res.json({message: "User updated correctly!"});
+} catch (err){
+  res.status(500).json(err);
+}
+
+})
+// Delete user 
+app.delete('/users/:userId', async (req,res) => {
+  try { 
+    const user = await User.findOneAndDelete({_id: req.params.userId});
+    if (!user) {
+      return res.status(404).json({message: 'No user with that ID'});
+    }
+    await Thought.deleteMany({ _id: {$in: user.thoughts}});
+    res.json({message: 'User and Thoughts deleted.'});
+  }catch(err){
+    res.status(500).json(err);
+  }
+});
+
 app.get('/thoughts', async (req, res) => {
   try {
     // Using model in route to find all documents that are instances of that model
