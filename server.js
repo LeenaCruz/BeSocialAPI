@@ -12,26 +12,35 @@ app.use(express.json());
 app.get('/users', async (req, res) => {
   try {
     // Using model in route to find all documents that are instances of that model
-    const result = await User.find({});
+    const result = await User.find({}).populate('thoughts');
     res.status(200).json(result);
   } catch (err) {
     res.status(500).send({ message: 'Internal Server Error' })
   }
 });
-
+// Searchs for a single user 
+app.get('/users/:userId', async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.userId }).populate('thoughts');
+    if (!user) {
+      return res.status(404).json({ message: 'No user with that ID' });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
 // Creates a new user
 app.post('/users', (req, res) => {
-  const newUser = new User ({ username: req.body.username, email: req.body.email });
+  const newUser = new User({ username: req.body.username, email: req.body.email });
   newUser.save();
-  if ( newUser) {
+  if (newUser) {
     res.status(201).json(newUser);
   } else {
     console.log('Uh Oh, something went wrong');
     res.status(500).json({ error: 'Something went wrong' });
   }
 });
-
-
 app.get('/thoughts', async (req, res) => {
   try {
     // Using model in route to find all documents that are instances of that model
@@ -41,25 +50,44 @@ app.get('/thoughts', async (req, res) => {
     res.status(500).send({ message: 'Internal Server Error' })
   }
 });
-
-// Creates a new  thought
-app.post('/thoughts', (req, res) => {
-  //Find user to attach thoughts WIP
-// try { 
-//   const user = await User.findOne({username: req.body.username})
-  
-// }
-  const newThought = new Thought({ thoughtText: req.body.thoughtText, username: req.body.username });
-  newThought.save();
-  if ( newThought) {
-    res.status(201).json(newThought);
-  } else {
-    console.log('Uh Oh, something went wrong');
-    res.status(500).json({ error: 'Something went wrong' });
+// Get  a single thought
+app.get('/thoughts/:thoughtId', async (req, res) => {
+  try {
+    const thought = await Thought.findOne({ _id: req.params.thoughtId })
+    if (!thought) {
+      return res.status(404).json({ message: 'No thought with that ID' });
+    }
+    res.json(thought);
+  } catch (err) {
+    res.status(500).json(err);
   }
 });
-
-
+// Creates a new  thought
+app.post('/thoughts', async (req, res) => {
+  //Find user to attach thoughts
+  try {
+    const user = await User.findOne({ _id: req.body.userId });
+    if (!user) {
+      return res.status(404).json({ message: 'No user with that ID' });
+    }
+    // Create thought find user and  update toughts
+    const newestThought = await Thought.create(req.body);
+    const thought = await User.findOneAndUpdate(
+      { _id: req.body.userId },
+      { $push: { thoughts: newestThought._id } },
+      { new: true }
+    );
+    if (!thought) {
+      return res
+        .status(404)
+        .json({ message: 'Thought created, but no users with this ID' });
+    }
+    res.json(newestThought);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+}
+);
 
 db.once('open', () => {
   app.listen(PORT, () => {
