@@ -73,6 +73,35 @@ app.delete('/users/:userId', async (req,res) => {
     res.status(500).json(err);
   }
 });
+// Add friends to users
+app.post('/users/:userId/friends/:friendId', async (req,res) => {
+//Find user to attach thoughts
+try {
+  const user = await User.findOne({ _id: req.params.userId });
+  if (!user) {
+    return res.status(404).json({ message: 'No user with that ID' });
+  }
+  // Found friend and push to friend(host)
+  const friend = await User.findOne({ _id: req.params.friendId });
+  const friendly = await User.findOneAndUpdate(
+    { _id: req.params.userId },
+    { $push: { friends: friend._id } },
+    { new: true }
+  );
+  if (!friendly) {
+    return res
+      .status(404)
+      .json({ message: 'Thought created, but no users with this ID' });
+  }
+  res.json(friend);
+} catch (err) {
+  res.status(500).json(err);
+}
+})
+
+
+
+
 
 app.get('/thoughts', async (req, res) => {
   try {
