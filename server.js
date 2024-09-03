@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('./config/connection');
 // Require model
-const { Thought, User } = require('./models');
+const { Thought, User, Reaction } = require('./models');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -44,75 +44,74 @@ app.post('/users', (req, res) => {
 // Update a user
 app.put('/users/:userId', async (req, res) => {
   try {
-  const user = await User.findOneAndUpdate(
-    { _id: req.body.userId },
-    { username: req.body.username, email: req.body.email},
-    {new: true}
-  );
-  if (!user) {
-    return res
-      .status(404)
-      .json({ message: 'Thought created, but no users with this ID' });
+    const user = await User.findOneAndUpdate(
+      { _id: req.body.userId },
+      { username: req.body.username, email: req.body.email },
+      { new: true }
+    );
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: 'Thought created, but no users with this ID' });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json(err);
   }
-  
-res.json(user);
-} catch (err){
-  res.status(500).json(err);
-}
-
 });
 // Delete user 
-app.delete('/users/:userId', async (req,res) => {
-  try { 
-    const user = await User.findOneAndDelete({_id: req.params.userId});
+app.delete('/users/:userId', async (req, res) => {
+  try {
+    const user = await User.findOneAndDelete({ _id: req.params.userId });
     if (!user) {
-      return res.status(404).json({message: 'No user with that ID'});
+      return res.status(404).json({ message: 'No user with that ID' });
     }
-    await Thought.deleteMany({ _id: {$in: user.thoughts}});
-    res.json({message: 'User and Thoughts deleted.'});
-  }catch(err){
+    await Thought.deleteMany({ _id: { $in: user.thoughts } });
+    res.json({ message: 'User and Thoughts deleted.' });
+  } catch (err) {
     res.status(500).json(err);
   }
 });
 // Add friends to users
-app.post('/users/:userId/friends/:friendId', async (req,res) => {
-//Find user to attach thoughts
-try {
-  const user = await User.findOne({ _id: req.params.userId });
-  if (!user) {
-    return res.status(404).json({ message: 'No user with that ID' });
+app.post('/users/:userId/friends/:friendId', async (req, res) => {
+  //Find user to attach thoughts
+  try {
+    const user = await User.findOne({ _id: req.params.userId });
+    if (!user) {
+      return res.status(404).json({ message: 'No user with that ID' });
+    }
+    // Found friend and push to friend(host)
+    const friend = await User.findOne({ _id: req.params.friendId });
+    const friendly = await User.findOneAndUpdate(
+      { _id: req.params.userId },
+      { $push: { friends: friend._id } },
+      { new: true }
+    );
+    if (!friendly) {
+      return res
+        .status(404)
+        .json({ message: 'Thought created, but no users with this ID' });
+    }
+    res.json(friend);
+  } catch (err) {
+    res.status(500).json(err);
   }
-  // Found friend and push to friend(host)
-  const friend = await User.findOne({ _id: req.params.friendId });
-  const friendly = await User.findOneAndUpdate(
-    { _id: req.params.userId },
-    { $push: { friends: friend._id } },
-    { new: true }
-  );
-  if (!friendly) {
-    return res
-      .status(404)
-      .json({ message: 'Thought created, but no users with this ID' });
-  }
-  res.json(friend);
-} catch (err) {
-  res.status(500).json(err);
-}
 });
 //Delete friend
-app.delete('/users/:userId/friends/:friendId', async (req,res) => {
+app.delete('/users/:userId/friends/:friendId', async (req, res) => {
   try {
-  const user = await User.findByIdAndUpdate(
-   req.params.userId,
-    {$pull: {friends: req.params.friendId}},
-    {new: true}
-  );
-  if (!user) {
-    return res.status(404).json({ message: 'No user with that ID' });
-  }
-  res.json(user);
+    const user = await User.findByIdAndUpdate(
+      //Pass the Id directly because findByIdandUpdate search for id not objects.
+      req.params.userId,
+      { $pull: { friends: req.params.friendId } },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: 'No user with that ID' });
+    }
+    res.json(user);
   } catch (err) {
-  res.status(500).json(err);
+    res.status(500).json(err);
   }
 });
 // Get all the thoughts
@@ -166,35 +165,78 @@ app.post('/thoughts', async (req, res) => {
 // Update a thought 
 app.put('/thoughts/:thoughtId', async (req, res) => {
   try {
-  const thought = await Thought.findOneAndUpdate(
-    { _id: req.params.thoughtId },
-    { thoughtText: req.body.thoughtText},
-    {new: true}
-  );
-  if (!thought) {
-    return res
-      .status(404)
-      .json({ message: 'Can not update thought' });
-  }
-  
-res.json(thought);
-} catch (err){
-  res.status(500).json(err);
-}
-
-})
-//Delete a thought
-app.delete('/thoughts/:thoughtId', async (req,res) => {
-  try { 
-    const thought = await Thought.findOneAndDelete({_id: req.params.thoughtId});
+    const thought = await Thought.findOneAndUpdate(
+      { _id: req.params.thoughtId },
+      { thoughtText: req.body.thoughtText },
+      { new: true }
+    );
     if (!thought) {
-      return res.status(404).json({message: 'No thought with that ID'});
+      return res
+        .status(404)
+        .json({ message: 'Can not update thought' });
     }
-    res.json({message: 'Thought deleted.'});
-  }catch(err){
+    res.json(thought);
+  } catch (err) {
     res.status(500).json(err);
   }
 });
+//Delete a thought
+app.delete('/thoughts/:thoughtId', async (req, res) => {
+  try {
+    const thought = await Thought.findOneAndDelete({ _id: req.params.thoughtId });
+    if (!thought) {
+      return res.status(404).json({ message: 'No thought with that ID' });
+    }
+    res.json({ message: 'Thought deleted.' });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+// Post a reaction to a thought
+app.post('/thoughts/:thoughtId/reactions', async (req, res) => {
+  try {
+    const thought = await Thought.findOneAndUpdate(
+      { _id: req.params.thoughtId },
+      { $push: { reactions: req.body } },
+      { new: true }
+    );
+    if (!thought) {
+      return res
+        .status(404)
+        .json({ message: 'Can not add reaction.' });
+    }
+    res.json(thought);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+// Delete reactions from a thought
+app.delete('/thoughts/:thoughtId/reactions', async (req,res)=> {
+  try {
+    const thought = await Thought.findOneAndUpdate(
+       {_id: req.params.thoughtId},
+      { $pull: { reactions: {reactionId: req.body.reactionId} } },
+      { new: true }
+    );
+    if (!thought) {
+      return res
+        .status(404)
+        .json({ message: 'Can not delete reaction.' });
+    }
+    res.json(thought);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+
+
+
+
+
+
+
+
 
 db.once('open', () => {
   app.listen(PORT, () => {
