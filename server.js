@@ -47,6 +47,7 @@ app.put('/users/:userId', async (req, res) => {
   const user = await User.findOneAndUpdate(
     { _id: req.body.userId },
     { username: req.body.username, email: req.body.email},
+    {new: true}
   );
   if (!user) {
     return res
@@ -54,7 +55,7 @@ app.put('/users/:userId', async (req, res) => {
       .json({ message: 'Thought created, but no users with this ID' });
   }
   
-res.json({message: "User updated correctly!"});
+res.json(user);
 } catch (err){
   res.status(500).json(err);
 }
@@ -97,12 +98,24 @@ try {
 } catch (err) {
   res.status(500).json(err);
 }
-})
-
-
-
-
-
+});
+//Delete friend
+app.delete('/users/:userId/friends/:friendId', async (req,res) => {
+  try {
+  const user = await User.findByIdAndUpdate(
+   req.params.userId,
+    {$pull: {friends: req.params.friendId}},
+    {new: true}
+  );
+  if (!user) {
+    return res.status(404).json({ message: 'No user with that ID' });
+  }
+  res.json(user);
+  } catch (err) {
+  res.status(500).json(err);
+  }
+});
+// Get all the thoughts
 app.get('/thoughts', async (req, res) => {
   try {
     // Using model in route to find all documents that are instances of that model
