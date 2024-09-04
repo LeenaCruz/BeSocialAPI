@@ -3,7 +3,6 @@ const router = require('express').Router();
 const { Thought, User } = require('../../models');
 
 // Get all users 
-// /api/users
 router.get('/', async (req, res) => {
     try {
       // Using model in route to find all documents that are instances of that model
@@ -13,7 +12,6 @@ router.get('/', async (req, res) => {
       res.status(500).send({ message: 'Internal Server Error' })
     }
   });
-
 // Searchs for a single user 
 router.get('/:userId', async (req, res) => {
     try {
@@ -26,7 +24,6 @@ router.get('/:userId', async (req, res) => {
       res.status(500).json(err);
     }
   });
-
   // Creates a new user
   router.post('/', (req, res) => {
     const newUser = new User({ username: req.body.username, email: req.body.email });
@@ -38,7 +35,6 @@ router.get('/:userId', async (req, res) => {
       res.status(500).json({ error: 'Something went wrong' });
     }
   });
-
   // Update a user
   router.put('/:userId', async (req, res) => {
     try {

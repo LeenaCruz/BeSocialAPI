@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'No user with that ID' });
     }
-    // Create thought find user and  update toughts
+    // Create thought find user and update toughts
     const newestThought = await Thought.create(req.body);
     const thought = await User.findOneAndUpdate(
       { _id: req.body.userId },
